@@ -1,2 +1,2 @@
-# Youtube-loops
+# Youtube-Loops
 Pythonで作ったlooptubeみたいなやつ。
