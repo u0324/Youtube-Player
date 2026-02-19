@@ -3,7 +3,6 @@ import re
 
 app = Flask(__name__)
 
-# YouTubeのURLから動画ID（v=xxxxの部分）を抜き出す関数
 def get_video_id(url):
     pattern = r'(?:v=|\/)([0-9A-Za-z_-]{11}).*'
     match = re.search(pattern, url)
@@ -11,43 +10,23 @@ def get_video_id(url):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    video_id = ""
-    player_html = ""
-
-    # ユーザーがURLを送信した場合
+    player_content = "URLを入力してください"
     if request.method == 'POST':
-        url = request.form.get('url')
-        video_id = get_video_id(url)
-        if video_id:
-            # ここでHTML構造を直接作成（ループ再生用パラメータ付き）
-            player_html = f'''
-            
-                
-            
-            '''
+        v_id = get_video_id(request.form.get('url', ''))
+        if v_id:
+            # タグを文字列結合で作成（制限回避）
+            src_url = f"https://www.youtube.com/embed/{v_id}?playlist={v_id}&loop=1&autoplay=1"
+            player_content = f''
         else:
-            player_html = '有効なURLを入力してください'
+            player_content = "無効なURLです"
 
-    # ブラウザに表示する画面全体（HTML）を文字列として返す
-    return f'''
+    # 最小限の構成を文字列で結合して返す
+    head = ""
+    title = "LoopTube Player"
+    form = ""
+    footer = ""
     
-    
-    
-        
-        
-        
-        
-    
-    
-        
-            LoopTube Player
-            {player_html}
-            
-            ※再生が始まったら右クリックで「ループ」を選択するか、自動ループ設定を読み込みます
-        
-    
-    
-    '''
+    return head + title + player_content + form + footer
 
 if __name__ == '__main__':
     app.run(debug=True)
