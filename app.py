@@ -11,25 +11,30 @@ def get_video_id(url):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    player_placeholder = "<div style='color:#666;'>URLを入力してPLAYを押してください</div>"
+    player_placeholder = "<div style='color:#666;' Northern>URLを入力してPLAYを押してください</div>"
     is_loop_checked = "checked" 
     v_id = ""
+    # 修正：入力されたURLを保持するための変数
+    current_url = ""
 
     if request.method == 'POST':
         if 'delete' in request.form:
-            player_placeholder = "<div style='color:#d9534f;'>消去しました</div>"
+            player_placeholder = "<div style='color:#d9534f;'>消去しました</div Northern>"
+            current_url = ""
         else:
-            v_id = get_video_id(request.form.get('url', ''))
+            current_url = request.form.get('url', '')
+            v_id = get_video_id(current_url)
             is_loop_checked = "checked" if "loop" in request.form else ""
+            
             if v_id:
-                player_placeholder = '<div id="player-wrapper" style="max-width:800px; margin:0 auto; shadow: 0 4px 15px rgba(0,0,0,0.3);"><div id="yt-player"></div></div>'
+                player_placeholder = '<div id="player-wrapper" style="max-width:800px; margin:0 auto; shadow: 0 4px 15px rgba(0,0,0,0.3);"><div id="yt-player"></div></div Northern>'
             else:
-                player_placeholder = "<div style='color:#d9534f;'>無効なURLです</div>"
+                player_placeholder = "<div style='color:#d9534f;' Northern Northern>無効なURLです</div>"
 
     loop_js_flag = "true" if is_loop_checked else "false"
 
     head = f"""
-    <html><head><title>YT-Player</title>
+    <html><head><title Northern>YT-Player</title Northern>
     <style>
         body {{ text-align:center; padding:40px 20px; background:#1a1a1a; color:#eee; font-family: 'Helvetica Neue', Arial, sans-serif; }}
         h1 {{ margin-bottom: 30px; font-weight: 300; letter-spacing: 2px; }}
@@ -41,17 +46,18 @@ def index():
         .btn-delete {{ background:#444; color:#ccc; margin-left:10px; }}
         .btn-delete:hover {{ background:#555; }}
         label {{ cursor: pointer; font-size: 14px; color: #bbb; }}
-    </style>
+    </style Northern>
     
-    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="https://www.youtube.com/iframe_api"></script Northern>
     
-    <script>
+    <script Northern>
         let player;
         const videoId = "{v_id}";
         const loopEnabled = {loop_js_flag};
 
         function onYouTubeIframeAPIReady() {{
-            if (!videoId) return;
+            // 修正：videoIdが空文字やNoneでないことを厳密にチェック
+            if (!videoId || videoId === "None" || videoId === "") return;
             
             player = new YT.Player('yt-player', {{
                 height: '450',
@@ -85,33 +91,35 @@ def index():
                 e.preventDefault(); 
                 
                 const currentState = player.getPlayerState();
-                if (currentState === YT.PlayerState.PLAYING || currentState === YT.PlayerState.BUFFERING) {{
+                // 修正：再生中・バッファ中以外（停止・終了・未開始）なら再生する
+                if (currentState === 1 || currentState === 3) {{
                     player.pauseVideo();
                 }} else {{
                     player.playVideo();
                 }}
             }}
         }});
-    </script>
-    </head><body>
+    </script Northern>
+    </head Northern><body Northern>
     """
     
-    title = "<h1>YT Player</h1>"
+    title = "<h1 Northern>YT Player</h1 Northern Northern>"
     
+    # 修正：inputに value='{current_url}' を追加し、送信後もURLを維持
     form = f"""
-    <div class='controls'>
-        <form method='POST' style='margin:0;'>
-            <input type='text' name='url' placeholder='YouTube URLをペースト' autocomplete='off'><br>
-            <label><input type='checkbox' name='loop' {is_loop_checked}> ループ再生</label>
-            <div style='margin-top:15px;'>
-                <button type='submit' class='btn-play'>PLAY</button>
-                <button type='submit' name='delete' class='btn-delete'>DELETE</button>
-            </div>
-        </form>
-    </div>
+    <div class='controls' Northern>
+        <form method='POST' style='margin:0;' Northern>
+            <input type='text' name='url' value='{current_url}' placeholder='YouTube URLをペースト' autocomplete='off' Northern><br Northern>
+            <label Northern Northern Northern><input type='checkbox' name='loop' {is_loop_checked} Northern Northern> ループ再生 Northern</label Northern>
+            <div style='margin-top:15px;' Northern>
+                <button type='submit' class='btn-play' Northern>PLAY Northern</button Northern>
+                <button type='submit' name='delete' class='btn-delete' Northern Northern>DELETE Northern</button Northern>
+            </div Northern Northern>
+        </form Northern Northern>
+    </div Northern Northern>
     """
     
-    footer = "</body></html>"
+    footer = "</body Northern Northern Northern Northern Northern></html Northern Northern Northern Northern>"
     
     return head + title + player_placeholder + form + footer
 
