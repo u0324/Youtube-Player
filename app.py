@@ -14,6 +14,7 @@ def index():
     is_loop_checked = "checked" 
     v_id = ""
     current_url = ""
+    player_content = "<div style='color:#666;'>URLを入力してPLAYを押してください</div>"
 
     if request.method == 'POST':
         if 'delete' in request.form:
@@ -23,8 +24,18 @@ def index():
             current_url = request.form.get('url', '')
             v_id = get_video_id(current_url)
             is_loop_checked = "checked" if "loop" in request.form else ""
-
-    loop_js_flag = "true" if is_loop_checked else "false"
+            
+            if v_id:
+                loop_param = f"&loop=1&playlist={v_id}" if is_loop_checked else ""
+                player_content = f"""
+                <div id="player-wrapper" style="max-width:800px; margin:0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border-radius: 8px; overflow: hidden;">
+                    <iframe width="100%" height="450" 
+                            src="https://www.youtube.com/embed/{v_id}?autoplay=1&rel=0{loop_param}" 
+                            frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                </div>
+                """
+            else:
+                player_content = "<div style='color:#d9534f;'>無効なURLです</div>"
 
     head = f"""
     <html><head><title>YT-Player</title>
@@ -37,66 +48,14 @@ def index():
         .btn-play {{ background:#007bff; color:white; }}
         .btn-delete {{ background:#444; color:#ccc; margin-left:10px; }}
         label {{ cursor: pointer; font-size: 14px; color: #bbb; }}
-        #player-wrapper {{ max-width:800px; margin:0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border-radius: 8px; overflow: hidden; background:#000; }}
     </style>
-    
-    <script src="https://www.youtube.com/iframe_api"></script>
-    
-    <script>
-        let player;
-        const videoId = "{v_id}";
-        const loopEnabled = {loop_js_flag};
-
-        function onYouTubeIframeAPIReady() {{
-            if (!videoId) return;
-            player = new YT.Player('main-player', {{
-                events: {{
-                    'onStateChange': onPlayerStateChange
-                }}
-            }});
-        }}
-
-        function onPlayerStateChange(event) {{
-            if (event.data === YT.PlayerState.ENDED && loopEnabled) {{
-                player.playVideo();
-            }}
-        }}
-
-        window.addEventListener('keydown', function(e) {{
-            if (!player || typeof player.getPlayerState !== 'function') return;
-            if (e.keyCode === 32 || e.keyCode === 75) {{
-                if (document.activeElement.tagName === 'INPUT') return;
-                e.preventDefault(); 
-                const state = player.getPlayerState();
-                if (state === 1 || state === 3) {{
-                    player.pauseVideo();
-                }} else {{
-                    player.playVideo();
-                }}
-            }}
-        }});
-    </script>
     </head><body>
     """
-
-    if v_id:
-        player_content = f"""
-        <div id="player-wrapper">
-            <iframe id="main-player" 
-                    width="100%" height="450" 
-                    src="https://www.youtube.com/embed/{v_id}?enablejsapi=1&autoplay=1&rel=0" 
-                    frameborder="0" 
-                    allow="autoplay; encrypted-media" 
-                    allowfullscreen></iframe>
-        </div>
-        """
-    else:
-        player_content = "<div style='color:#666;'>URLを入力してPLAYを押してください</div>"
     
     form = f"""
     <div class='controls'>
         <form method='POST' style='margin:0;'>
-            <input type='text' name='url' value='{current_url}' placeholder='動画URLをペースト' autocomplete='off'><br>
+            <input type='text' name='url' value='{current_url}' placeholder='YouTube URLをペースト' autocomplete='off'><br>
             <label><input type='checkbox' name='loop' {is_loop_checked}> ループ再生</label>
             <div style='margin-top:15px;'>
                 <button type='submit' class='btn-play'>PLAY</button>
