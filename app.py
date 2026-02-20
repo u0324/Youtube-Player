@@ -92,8 +92,8 @@ def index():
                 }}
             }}
         }});
-    《/script》
-    《/head》《body》
+    </script>
+    </head><body>
     """
     
     title = "<h1>YT Player</h1>"
@@ -102,7 +102,7 @@ def index():
     <div class='controls'>
         <form method='POST' style='margin:0;'>
             <input type='text' name='url' placeholder='YouTube URLをペースト' autocomplete='off'><br>
-            <label><input type='checkbox' name='loop' {is_loop_checked}> ループ再生《/label》
+            <label><input type='checkbox' name='loop' {is_loop_checked}> ループ再生</label>
             <div style='margin-top:15px;'>
                 <button type='submit' class='btn-play'>PLAY</button>
                 <button type='submit' name='delete' class='btn-delete'>DELETE</button>
