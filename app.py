@@ -11,26 +11,109 @@ def get_video_id(url):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    player_content = "URLを入力してください"
+    player_placeholder = "<div style='color:#666;'>URLを入力してPLAYを押してください</div>"
+    is_loop_checked = "checked" 
+    v_id = ""
+
     if request.method == 'POST':
         if 'delete' in request.form:
-            player_content = "消去しました"
+            player_placeholder = "<div style='color:#d9534f;'>消去しました</div>"
         else:
             v_id = get_video_id(request.form.get('url', ''))
+            is_loop_checked = "checked" if "loop" in request.form else ""
             if v_id:
-                src_url = f"https://www.youtube.com/embed/{v_id}?playlist={v_id}&loop=1&autoplay=1"
-                player_content = f'<div><iframe width="100%" height="400" src="{src_url}" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe></div>'
+                player_placeholder = '<div id="player-wrapper" style="max-width:800px; margin:0 auto; shadow: 0 4px 15px rgba(0,0,0,0.3);"><div id="yt-player"></div></div>'
             else:
-                player_content = "無効なURLです"
+                player_placeholder = "<div style='color:#d9534f;'>無効なURLです</div>"
 
-    head = "<html><head><title>Yt-Player</title></head><body style='text-align:center;padding:20px;'>"
+    loop_js_flag = "true" if is_loop_checked else "false"
+
+    head = f"""
+    <html><head><title>YT-Player</title>
+    <style>
+        body {{ text-align:center; padding:40px 20px; background:#1a1a1a; color:#eee; font-family: 'Helvetica Neue', Arial, sans-serif; }}
+        h1 {{ margin-bottom: 30px; font-weight: 300; letter-spacing: 2px; }}
+        .controls {{ margin-top: 30px; background: #2a2a2a; padding: 20px; border-radius: 12px; display: inline-block; }}
+        input[type='text'] {{ width:400px; padding:12px; border:none; border-radius:6px; background:#333; color:#fff; margin-bottom: 15px; }}
+        button {{ padding:12px 25px; cursor:pointer; border-radius:6px; border:none; font-weight:bold; transition: 0.3s; }}
+        .btn-play {{ background:#007bff; color:white; }}
+        .btn-play:hover {{ background:#0056b3; }}
+        .btn-delete {{ background:#444; color:#ccc; margin-left:10px; }}
+        .btn-delete:hover {{ background:#555; }}
+        label {{ cursor: pointer; font-size: 14px; color: #bbb; }}
+    </style>
+    
+    <script src="https://www.youtube.com/iframe_api"></script>
+    
+    <script>
+        let player;
+        const videoId = "{v_id}";
+        const loopEnabled = {loop_js_flag};
+
+        function onYouTubeIframeAPIReady() {{
+            if (!videoId) return;
+            
+            player = new YT.Player('yt-player', {{
+                height: '450',
+                width: '100%',
+                videoId: videoId,
+                playerVars: {{
+                    'autoplay': 1,
+                    'controls': 1,
+                    'rel': 0,
+                    'vq': 'hd1080',  
+                    'enablejsapi': 1
+                }},
+                events: {{
+                    'onStateChange': onPlayerStateChange
+                }}
+            }});
+        }}
+
+        function onPlayerStateChange(event) {{
+            if (event.data === YT.PlayerState.ENDED && loopEnabled) {{
+                player.playVideo();
+            }}
+        }}
+
+        window.addEventListener('keydown', function(e) {{
+            if (!player || typeof player.getPlayerState !== 'function') return;
+
+            if (e.keyCode === 32 || e.keyCode === 75) {{
+                if (document.activeElement.tagName === 'INPUT') return;
+                
+                e.preventDefault(); 
+                
+                const currentState = player.getPlayerState();
+                if (currentState === YT.PlayerState.PLAYING || currentState === YT.PlayerState.BUFFERING) {{
+                    player.pauseVideo();
+                }} else {{
+                    player.playVideo();
+                }}
+            }}
+        }});
+    《/script》
+    《/head》《body》
+    """
+    
     title = "<h1>YT Player</h1>"
     
-    form = "<form method='POST'><input type='text' name='url' style='width:60%' placeholder='URLを貼る' autocomplete='off'><button type='submit'>PLAY</button><button type='submit' name='delete' style='margin-left:5px;'>DELETE</button></form."
+    form = f"""
+    <div class='controls'>
+        <form method='POST' style='margin:0;'>
+            <input type='text' name='url' placeholder='YouTube URLをペースト' autocomplete='off'><br>
+            <label><input type='checkbox' name='loop' {is_loop_checked}> ループ再生《/label》
+            <div style='margin-top:15px;'>
+                <button type='submit' class='btn-play'>PLAY</button>
+                <button type='submit' name='delete' class='btn-delete'>DELETE</button>
+            </div>
+        </form>
+    </div>
+    """
     
     footer = "</body></html>"
     
-    return head + title + player_content + form + footer
+    return head + title + player_placeholder + form + footer
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
